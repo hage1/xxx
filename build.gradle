@@ -1,5 +1,3 @@
-import com.github.hage1.gradle.tasks.GradlePluginProperty
-
 buildscript {
     repositories {
         mavenLocal()
@@ -17,6 +15,7 @@ apply plugin: 'groovy'
 apply plugin: 'maven'
 apply plugin: 'plugin-dev'
 
+//noinspection GroovyUnusedAssignment
 sourceCompatibility = 1.5
 
 dependencies {
@@ -27,18 +26,6 @@ dependencies {
 group = 'com.github.hage1.gradle'
 version = '0.1'
 
-def artifactId = 'forgehelper'
-
 repositories {
     mavenCentral()
-}
-
-configurations {
-    includeInJar
-}
-
-dependencies {
-    compile 'com.google.guava:guava:14.+'
-    compile 'org.ow2.asm:asm-all:4.0'
-    testCompile group: 'junit', name: 'junit', version: '4.11'
 }
