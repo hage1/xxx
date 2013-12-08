@@ -1,8 +1,5 @@
 package com.github.hage1.gradle
 
-import com.google.common.collect.HashMultimap
-import com.google.common.collect.Multimap
-import com.google.common.collect.SetMultimap
 import groovy.transform.ToString
 import org.gradle.api.Action
 import org.gradle.api.Plugin
@@ -15,7 +12,6 @@ import org.objectweb.asm.tree.AnnotationNode
 import org.objectweb.asm.tree.ClassNode
 
 import java.nio.file.Path
-import java.nio.file.Paths
 
 /**
  * Created by wataru on 13/12/06.
@@ -76,14 +72,19 @@ class MakePluginSpec implements Action<Task> {
         return null
     }
 
-    final def SetMultimap<String, String> makePluginImplSpec(Collection<File> classes) {
-        def SetMultimap<String, String> spec = classes.inject(HashMultimap.create()) {
-            Multimap<String, String> acc, File cls ->
+    final def Map<String, Set<String>> makePluginImplSpec(Collection<File> classes) {
+        def spec = classes.inject(new HashMap<String, Set<String>>()) {
+            Map<String, Set<String>> acc, File cls ->
                 def result = getAlias cls
-                if (result) { acc.put result.key, result.value }
+                if (result) {
+                    if (! acc.containsKey(result.key)) {
+                        acc.put(result.key, new HashSet<String>())
+                    }
+                    acc.get(result.key).add(result.value)
+                }
                 acc
-        } as SetMultimap<String, String>
-        assert spec.asMap().any{key, value -> ! value.empty }
+        }
+        assert spec.any {key, value -> ! value.empty }
         spec
     }
 
@@ -95,7 +96,6 @@ class MakePluginSpec implements Action<Task> {
         pluginSpecDir.resolve("${alias}.properties").toFile()
     }
 
-
     @Override
     void execute(Task task) {
         pluginSpecDir.toFile().with {
@@ -103,9 +103,10 @@ class MakePluginSpec implements Action<Task> {
                 logger.info("${pluginSpecDir} not exists, so create dirs")
                 mkdirs()
             }
+            null
         }
 
-        makePluginImplSpec(classes).asMap().each{ String alias, Collection<String> classes ->
+        makePluginImplSpec(classes).each{ String alias, Collection<String> classes ->
             assert classes.toArray().length == 1, "duplication implementations classes of ${alias}: ${classes}"
             makeSpecFile(alias).with {
                 def simplePath = task.project.relativeProjectPath((delegate as File).path)
